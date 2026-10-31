@@ -48,13 +48,26 @@ export default function LandingPage() {
                     letterSpacing: '0.06em',
                 }}
             >
-                <span style={{ color: '#7ee787', fontWeight: 700 }}>
-                    DOCSDRIVE
-                    <span style={{ color: '#6a737d', fontWeight: 400 }}>
-                        {' '}
-                        · documentation integrity engine
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                    <img
+                        src="/icon.svg"
+                        alt="DocsDrive Logo"
+                        width={22}
+                        height={22}
+                        style={{
+                            borderRadius: 6,
+                            display: 'inline-block',
+                            boxShadow: '0 0 10px rgba(0, 240, 138, 0.35)',
+                        }}
+                    />
+                    <span style={{ color: '#7ee787', fontWeight: 700 }}>
+                        DOCSDRIVE
+                        <span style={{ color: '#6a737d', fontWeight: 400 }}>
+                            {' '}
+                            · documentation integrity engine
+                        </span>
                     </span>
-                </span>
+                </div>
                 <nav style={{ display: 'flex', gap: 18 }}>
                     <a href="/workstation" style={{ color: '#cdd9e5' }}>
                         workstation

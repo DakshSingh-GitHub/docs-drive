@@ -48,7 +48,7 @@ export default function WorkstationPage() {
                     right: 20,
                     display: 'flex',
                     justifyContent: 'space-between',
-                    alignItems: 'baseline',
+                    alignItems: 'center',
                     color: '#7ee787',
                     fontFamily:
                         'ui-monospace, "SF Mono", Menlo, Consolas, monospace',
@@ -60,7 +60,20 @@ export default function WorkstationPage() {
                     textShadow: '0 1px 4px rgba(0,0,0,0.8)',
                 }}
             >
-                <span style={{ fontWeight: 700 }}>DOCSDRIVE</span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                    <img
+                        src="/icon.svg"
+                        alt="DocsDrive Logo"
+                        width={22}
+                        height={22}
+                        style={{
+                            borderRadius: 6,
+                            display: 'inline-block',
+                            boxShadow: '0 0 10px rgba(0, 240, 138, 0.35)',
+                        }}
+                    />
+                    <span style={{ fontWeight: 700 }}>DOCSDRIVE</span>
+                </div>
                 <span>BOOTING DOCUMENTATION INTEGRITY ENGINE…</span>
             </div>
         </main>
