@@ -12,10 +12,11 @@ from __future__ import annotations
 import json
 import logging
 import re
+import uuid
 from dataclasses import dataclass
 from typing import Dict, List, Optional, Tuple
 
-from core.models import (
+from .models import (
     ChangeType,
     CodeSymbolChange,
     DocSentence,
@@ -389,7 +390,7 @@ class OfflineDriftDetector:
             suggested_fix = self._generate_offline_fix(change, doc)
             findings.append(
                 DriftFinding(
-                    id=f"offline-{len(findings)+1}",
+                    id=f"offline-{uuid.uuid4().hex[:8]}",
                     doc_path=doc.doc_path,
                     doc_line_number=doc.line_number,
                     affected_sentence=doc.sentence_text,

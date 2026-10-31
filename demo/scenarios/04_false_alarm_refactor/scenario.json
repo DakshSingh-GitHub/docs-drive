@@ -1,0 +1,17 @@
+{
+  "id": "scenario-04-false-alarm-refactor",
+  "name": "Internal Refactor (No Drift)",
+  "description": "Internal socket refactoring that leaves public API unchanged",
+  "category": "no_drift",
+  "severity": "none",
+  "diff": "diff --git a/utils/socket.py b/utils/socket.py\nindex abc123..def456 100644\n--- a/utils/socket.py\n+++ b/utils/socket.py\n@@ -1,5 +1,5 @@\n-import socket\n+import selectors\n\ndef process_data(data):\n     return data",
+  "docs": {
+    "README.md": "# Architecture\n\nOur utility functions provide efficient data processing and network communication.\n"
+  },
+  "expected_drift": false,
+  "expected_file": null,
+  "expected_symbol": null,
+  "drift_type": "none",
+  "severity": "none",
+  "description_for_judges": "Internal implementation changed (socket → selectors) but the public API and behavior remain identical. The system correctly produces ZERO drift findings, demonstrating false-alarm suppression."
+}

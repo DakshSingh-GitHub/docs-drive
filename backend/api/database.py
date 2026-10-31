@@ -207,7 +207,7 @@ class Database:
         try:
             conn.executemany(
                 """
-                INSERT INTO findings
+                INSERT OR REPLACE INTO findings
                     (id, run_id, doc_path, doc_line_number, affected_sentence,
                      code_file_path, code_line_start, code_line_end, drift_type,
                      severity, confidence, explanation, suggested_fix)

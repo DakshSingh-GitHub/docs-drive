@@ -107,3 +107,61 @@ class RunsListResponse(BaseModel):
 
     runs: List[Dict[str, Any]]
     total: int
+
+
+# ---------------------------------------------------------------------------
+# Phase 4: Frontend Dashboard Schemas
+# ---------------------------------------------------------------------------
+
+class Scenario(BaseModel):
+    """A curated demo scenario for the playground / demo mode."""
+
+    id: str
+    name: str
+    description: str
+    diff: str
+    docs: Dict[str, str]
+    expected_drift: bool
+
+
+class SideBySideRequest(BaseModel):
+    """Request to fetch side-by-side diff + doc sentence pair."""
+
+    run_id: str
+    finding_id: str
+
+
+class SideBySideResponse(BaseModel):
+    """Side-by-side comparison data for a single drift finding."""
+
+    finding: Dict[str, Any]
+    code_diff_hunk: str
+    doc_sentence: str
+    doc_line_number: int
+
+
+class ApplyFixRequest(BaseModel):
+    """Request to generate a downloadable git patch for a fix."""
+
+    finding_id: str
+    fix_type: str = Field("sentence", description="'sentence' or 'paragraph'")
+
+
+class ApplyFixResponse(BaseModel):
+    """Response containing a git patch ready for git apply."""
+
+    git_patch: str
+    filename: str
+
+
+class RepositoryTrack(BaseModel):
+    """A repository to track/monitor for drift analysis."""
+
+    owner: str
+    repo: str
+
+
+class RepositoryListResponse(BaseModel):
+    """List of tracked repositories."""
+
+    repositories: List[RepositoryTrack]
