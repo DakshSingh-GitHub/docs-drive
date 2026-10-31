@@ -16,9 +16,16 @@ import os
 import re
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Dict, List, Optional, Set, Tuple
+from typing import Any, Dict, List, Optional, Set, Tuple
 
-import git
+# Prevent GitPython from raising ImportError at import time in serverless containers
+# where the git binary is not installed in $PATH.
+os.environ.setdefault("GIT_PYTHON_REFRESH", "quiet")
+try:
+    import git
+except Exception:  # pragma: no cover
+    git = None  # type: ignore
+
 from unidiff import PatchSet
 
 from .models import DocSentence

@@ -7,8 +7,17 @@ over HTTP with async background workers and SQLite persistence.
 from __future__ import annotations
 
 import logging
+import os
+import sys
 from contextlib import asynccontextmanager
+from pathlib import Path
 from typing import Any, Dict
+
+# Ensure the `backend/` directory is on sys.path so absolute imports like
+# `from core...` and `from api...` resolve in Vercel serverless and root-level runs.
+_BACKEND_DIR = str(Path(__file__).resolve().parent.parent)
+if _BACKEND_DIR not in sys.path:
+    sys.path.insert(0, _BACKEND_DIR)
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -62,14 +71,14 @@ app = FastAPI(
 )
 
 # CORS for Next.js frontend
+cors_origins = os.environ.get(
+    "CORS_ORIGINS",
+    "http://localhost:3000,http://127.0.0.1:3000,http://localhost:3001,http://127.0.0.1:3001",
+).split(",")
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:3000",
-        "http://127.0.0.1:3000",
-        "http://localhost:3001",
-        "http://127.0.0.1:3001",
-    ],
+    allow_origins=[o.strip() for o in cors_origins if o.strip()],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

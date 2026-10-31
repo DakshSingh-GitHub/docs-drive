@@ -11,6 +11,20 @@
 export const API_URL =
     process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
+function getApiBase(): string {
+    if (process.env.NEXT_PUBLIC_API_URL) {
+        return process.env.NEXT_PUBLIC_API_URL;
+    }
+    if (
+        typeof window !== 'undefined' &&
+        window.location.hostname !== 'localhost' &&
+        window.location.hostname !== '127.0.0.1'
+    ) {
+        return '';
+    }
+    return API_URL;
+}
+
 export interface RunStatus {
     run_id: string;
     status: 'queued' | 'processing' | 'completed' | 'failed';
@@ -67,7 +81,7 @@ export interface Scenario {
 }
 
 async function fetchJson(path: string, init?: RequestInit): Promise<unknown> {
-    const res = await fetch(`${API_URL}${path}`, init);
+    const res = await fetch(`${getApiBase()}${path}`, init);
     if (!res.ok) {
         const detail = await res
             .json()

@@ -2,18 +2,30 @@
   "version": 2,
   "builds": [
     {
+      "src": "package.json",
+      "use": "@vercel/next"
+    },
+    {
       "src": "backend/api/main.py",
-      "use": "@vercel/python"
+      "use": "@vercel/python",
+      "config": {
+        "includeFiles": "demo/**"
+      }
     }
   ],
   "routes": [
     {
       "src": "/api/(.*)",
       "dest": "backend/api/main.py"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/$1"
     }
   ],
   "env": {
     "PYTHONPATH": "backend",
+    "GIT_PYTHON_REFRESH": "quiet",
     "CONFIDENCE_THRESHOLD": "0.75",
     "FAIL_ON_DRIFT": "true",
     "OLLAMA_URL": "http://localhost:11434",
