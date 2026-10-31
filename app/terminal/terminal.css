@@ -1,0 +1,140 @@
+/* DocsDrive Terminal — phosphor CRT aesthetic */
+
+.terminal-root {
+    background: #0c1210;
+    color: #7ee787;
+    font-family: ui-monospace, "SF Mono", "Cascadia Code", Menlo, Consolas,
+        monospace;
+    font-size: 15px;
+    line-height: 1.45;
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    padding: 18px 22px;
+    box-sizing: border-box;
+    -webkit-font-smoothing: antialiased;
+}
+
+.terminal-standalone {
+    min-height: 100vh;
+}
+
+.terminal-scanlines {
+    pointer-events: none;
+    position: fixed;
+    inset: 0;
+    background: repeating-linear-gradient(
+        to bottom,
+        transparent 0px,
+        transparent 2px,
+        rgba(0, 0, 0, 0.14) 3px,
+        rgba(0, 0, 0, 0.14) 4px
+    );
+    mix-blend-mode: multiply;
+    z-index: 10;
+}
+
+.terminal-output {
+    flex: 1;
+    overflow-y: auto;
+    white-space: pre-wrap;
+    word-break: break-word;
+    scrollbar-width: thin;
+    scrollbar-color: #1d3a2a transparent;
+}
+
+.terminal-input-row {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    flex-shrink: 0;
+    padding-top: 6px;
+}
+
+.terminal-prompt {
+    color: #3fb950;
+    font-weight: 600;
+    flex-shrink: 0;
+}
+
+.terminal-input {
+    background: transparent;
+    border: none;
+    outline: none;
+    color: #b6f0bc;
+    caret-color: #7ee787;
+    font: inherit;
+    flex: 1;
+    min-width: 0;
+}
+
+/* line colours */
+.tl-dim {
+    color: #3d6b4a;
+}
+.tl-green {
+    color: #7ee787;
+}
+.tl-bright {
+    color: #c9ffce;
+    font-weight: 600;
+}
+.tl-amber {
+    color: #e3b341;
+}
+.tl-red {
+    color: #f85149;
+}
+.tl-white {
+    color: #cdd9e5;
+}
+.tl-blue {
+    color: #79c0ff;
+}
+
+.terminal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    color: #3d6b4a;
+    border-bottom: 1px solid #163023;
+    padding-bottom: 8px;
+    margin-bottom: 10px;
+    flex-shrink: 0;
+    font-size: 13px;
+    letter-spacing: 0.08em;
+}
+
+.terminal-header .terminal-brand {
+    color: #7ee787;
+    font-weight: 700;
+}
+
+.terminal-backlink {
+    color: #3d6b4a;
+    text-decoration: none;
+}
+.terminal-backlink:hover {
+    color: #7ee787;
+}
+
+/* BIOS boot */
+.terminal-bios {
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
+/* findings block */
+.tl-block {
+    border-left: 2px solid #163023;
+    padding-left: 12px;
+    margin: 6px 0 10px 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .terminal-bios {
+        animation: none;
+    }
+}
