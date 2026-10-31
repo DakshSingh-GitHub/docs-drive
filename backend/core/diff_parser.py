@@ -514,6 +514,36 @@ class DiffParser:
                             f"Failed to generate git diff between {resolved_base} and {resolved_head}: {err}"
                         ) from err
 
+        # If diff is empty, handle post-merge or ancestor scenarios
+        if not diff_text.strip():
+            try:
+                if repo.is_ancestor(resolved_head, resolved_base):
+                    logger.info(
+                        "%s is an ancestor of %s (already merged). Attempting diff against base parent or head~1",
+                        resolved_head, resolved_base
+                    )
+                    base_commit = repo.commit(resolved_base)
+                    if len(base_commit.parents) > 1:
+                        # Base is a merge commit (e.g. merge of PR into main).
+                        # Diff the parent before merge (first parent) to head
+                        first_parent = base_commit.parents[0].hexsha
+                        try:
+                            diff_text = repo.git.diff(f"{first_parent}...{resolved_head}")
+                        except Exception:
+                            diff_text = repo.git.diff(f"{first_parent}..{resolved_head}")
+                    else:
+                        try:
+                            diff_text = repo.git.diff(f"{resolved_head}~1..{resolved_head}")
+                        except Exception:
+                            pass
+                elif resolved_base == resolved_head:
+                    try:
+                        diff_text = repo.git.diff(f"{resolved_head}~1..{resolved_head}")
+                    except Exception:
+                        pass
+            except Exception as err:
+                logger.debug("Failed post-merge ancestor fallback diff: %s", err)
+
         self.parse_diff(diff_text)
         return self
 

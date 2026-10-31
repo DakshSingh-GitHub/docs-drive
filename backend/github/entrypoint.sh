@@ -28,8 +28,14 @@ DOCS_DIR="${DOCS_DIR:-docs}"
 GITHUB_REPOSITORY="${GITHUB_REPOSITORY:-}"
 GITHUB_EVENT_PATH="${GITHUB_EVENT_PATH:-}"
 
-# Mark the git working directory as safe (GitHub Actions runners)
-git config --global --add safe.directory "$GITHUB_WORKSPACE" 2>/dev/null || true
+# Mark the git working directory as safe (GitHub Actions runners) and cd into workspace
+if [ -n "${GITHUB_WORKSPACE:-}" ] && [ -d "$GITHUB_WORKSPACE" ]; then
+    cd "$GITHUB_WORKSPACE"
+    git config --global --add safe.directory "$GITHUB_WORKSPACE" 2>/dev/null || true
+fi
+
+# Ensure /app and workspace modules are available on python path
+export PYTHONPATH="/app:${GITHUB_WORKSPACE:-}:${PYTHONPATH:-}"
 
 # Fetch the base commit if needed (shallow fetch)
 if [ -n "$BASE_REF" ]; then

@@ -260,5 +260,34 @@ def test_from_local_repo_normal_branches(tmp_path):
     assert parser.has_code_changes
 
 
+def test_from_local_repo_already_merged_branch(tmp_path):
+    """Test from_local_repo when head_ref is already merged into base_ref."""
+    import git
+
+    repo = git.Repo.init(str(tmp_path))
+    file_path = tmp_path / "cli.py"
+    file_path.write_text("TIMEOUT = 30\n", encoding="utf-8")
+    repo.index.add(["cli.py"])
+    c1 = repo.index.commit("initial commit")
+    main_branch = repo.create_head("main", c1)
+
+    # Create feature branch and commit
+    feat = repo.create_head("logo-pr", c1)
+    repo.head.reference = feat
+    file_path.write_text("TIMEOUT = 60\n", encoding="utf-8")
+    repo.index.add(["cli.py"])
+    c2 = repo.index.commit("feature commit")
+
+    # Merge logo-pr into main
+    repo.head.reference = main_branch
+    repo.head.reset(index=True, working_tree=True)
+    repo.git.merge("logo-pr", "--no-ff", "-m", "Merge pull request #1 from logo-pr")
+
+    parser = DiffParser()
+    parser.from_local_repo(str(tmp_path), base_ref="main", head_ref="logo-pr")
+    assert "cli.py" in parser.files
+    assert parser.has_code_changes
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
