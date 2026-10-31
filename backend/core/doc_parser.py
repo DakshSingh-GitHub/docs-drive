@@ -97,18 +97,32 @@ class SentenceSplitter:
 
     def _tokenize_sentence(self, text: str) -> Tuple[str, str]:
         """Tokenize text into (leading_sentence, trailing_remainder)."""
-        # Strip trailing code for the sentence-termination decision
+        # Strip inline code for sentence-termination decisions only;
+        # the returned sentence text preserves the original code spans.
         clean = self._strip_inline_code(text)
         pos = self._find_sentence_end(clean)
         if pos == -1:
             return text, ""
-        leading = clean[:pos].strip()
-        trailing = clean[pos + 1 :].strip()
-        # Re-attach any trailing code span from original
-        if trailing and self.keep_code_inline and not trailing.startswith("`"):
-            # nothing to do
-            pass
+        # Map the clean-text position back to the original text position
+        orig_pos = self._map_clean_to_original(pos, text)
+        leading = text[:orig_pos].strip()
+        trailing = text[orig_pos + 1 :].strip()
         return leading, trailing
+
+    @staticmethod
+    def _map_clean_to_original(clean_pos: int, text: str) -> int:
+        """Map a position in inline-code-stripped text to original text position."""
+        orig_pos = 0
+        clean_idx = 0
+        while clean_idx < clean_pos and orig_pos < len(text):
+            m = INLINE_CODE_PATTERN.match(text, orig_pos)
+            if m:
+                # Skip the entire code span in original (it vanishes in clean)
+                orig_pos = m.end()
+            else:
+                orig_pos += 1
+                clean_idx += 1
+        return orig_pos
 
     @staticmethod
     def _strip_inline_code(text: str) -> str:

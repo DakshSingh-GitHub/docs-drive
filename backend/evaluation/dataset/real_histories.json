@@ -1,0 +1,76 @@
+[
+  {
+    "id": "scenario-click-flag-rename",
+    "project": "sample-cli-tool",
+    "description": "Renamed --timeout-secs to --timeout in options parser",
+    "commit_a_diff": "diff --git a/src/cli.py b/src/cli.py\nindex abc123..def456 100644\n--- a/src/cli.py\n+++ b/src/cli.py\n@@ -24,3 +24,3 @@\n-    parser.add_argument('--timeout-secs', default=30)\n+    parser.add_argument('--timeout', default=30)\n",
+    "pre_fix_docs": {
+      "README.md": "# CLI Tool\n\nConfigure network options:\nUse `--timeout-secs` to configure request timeout.\nDefault value is 30 seconds."
+    },
+    "corrective_commit_b_diff": "diff --git a/README.md b/README.md\nindex 111..222 100644\n--- a/README.md\n+++ b/README.md\n@@ -4,3 +4,3 @@\n-Use `--timeout-secs` to configure request timeout.\n+Use `--timeout` to configure request timeout.\n",
+    "ground_truth": {
+      "drift_file": "README.md",
+      "drift_line": 4,
+      "drift_type": "renamed_flag",
+      "expected_symbol": "--timeout-secs"
+    }
+  },
+  {
+    "id": "scenario-fastapi-default-port",
+    "project": "sample-web-api",
+    "description": "Changed default server port from 8080 to 3000",
+    "commit_a_diff": "diff --git a/config.py b/config.py\nindex abc123..def456 100644\n--- a/config.py\n+++ b/config.py\n@@ -10,3 +10,3 @@\n-DEFAULT_PORT = 8080\n+DEFAULT_PORT = 3000\n",
+    "pre_fix_docs": {
+      "docs/setup.md": "# Setup\n\nThe development server listens on port 8080 by default."
+    },
+    "corrective_commit_b_diff": "diff --git a/docs/setup.md b/docs/setup.md\nindex 111..222 100644\n--- a/docs/setup.md\n+++ b/docs/setup.md\n@@ -3,3 +3,3 @@\n-The development server listens on port 8080 by default.\n+The development server listens on port 3000 by default.\n",
+    "ground_truth": {
+      "drift_file": "docs/setup.md",
+      "drift_line": 3,
+      "drift_type": "incorrect_default",
+      "expected_symbol": "8080"
+    }
+  },
+  {
+    "id": "scenario-internal-refactor-no-drift",
+    "project": "sample-utils",
+    "description": "Internal helper refactor (no drift)",
+    "commit_a_diff": "diff --git a/utils/helpers.py b/utils/helpers.py\nindex abc123..def456 100644\n--- a/utils/helpers.py\n+++ b/utils/helpers.py\n@@ -1,5 +1,5 @@\n-def _internal_worker(data):\n+def _process_internal(data):\n     return sanitize(data)\n",
+    "pre_fix_docs": {
+      "README.md": "Our utility functions provide string sanitization and data processing."
+    },
+    "corrective_commit_b_diff": "",
+    "ground_truth": {
+      "has_drift": false
+    }
+  },
+  {
+    "id": "scenario-env-var-rename",
+    "project": "sample-settings",
+    "description": "Environment variable renamed from APP_KEY_OLD to APP_KEY",
+    "commit_a_diff": "diff --git a/settings.py b/settings.py\nindex abc123..def456 100644\n--- a/settings.py\n+++ b/settings.py\n@@ -3,5 +3,5 @@ import os\n-APP_SECRET = os.environ.get(\"APP_KEY_OLD\", \"default\")\n+APP_SECRET = os.environ.get(\"APP_KEY\", \"default\")\n",
+    "pre_fix_docs": {
+      "docs/secrets.md": "# Secrets\n\nSet the APP_KEY_OLD environment variable before starting the server."
+    },
+    "corrective_commit_b_diff": "diff --git a/docs/secrets.md b/docs/secrets.md\nindex 111..222 100644\n--- a/docs/secrets.md\n+++ b/docs/secrets.md\n@@ -3,3 +3,3 @@\n-Set the APP_KEY_OLD environment variable before starting the server.\n+Set the APP_KEY environment variable before starting the server.\n",
+    "ground_truth": {
+      "drift_file": "docs/secrets.md",
+      "drift_line": 3,
+      "drift_type": "renamed_flag",
+      "expected_symbol": "APP_KEY_OLD"
+    }
+  },
+  {
+    "id": "scenario-doc-already-updated",
+    "project": "sample-prefixed",
+    "description": "PR already updated the doc (should be suppressed)",
+    "commit_a_diff": "diff --git a/cli.py b/cli.py\nindex abc123..def456 100644\n--- a/cli.py\n+++ b/cli.py\n@@ -1,5 +1,5 @@\n-def connect(timeout=30):\n+def connect(timeout=60):\n     pass\ndiff --git a/README.md b/README.md\nindex 111..222 100644\n--- a/README.md\n+++ b/README.md\n@@ -5,4 +5,4 @@ The tool connects with a default timeout of 30 seconds.\n+The tool connects with a default timeout of 60 seconds.\n",
+    "pre_fix_docs": {
+      "README.md": "The tool connects with a default timeout of 60 seconds."
+    },
+    "corrective_commit_b_diff": "",
+    "ground_truth": {
+      "has_drift": false
+    }
+  }
+]

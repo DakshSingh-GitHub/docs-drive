@@ -1,0 +1,58 @@
+name: 'Automated Documentation Drift Detection'
+description: 'Detects documentation made incorrect by code changes in pull requests and links issues to exact code diff lines.'
+author: 'HisenBugs'
+
+inputs:
+  github_token:
+    description: 'GitHub Token for posting review comments and check annotations'
+    required: true
+    default: ${{ github.token }}
+  base_ref:
+    description: 'Base branch or commit SHA (e.g. main)'
+    required: false
+    default: ${{ github.base_ref || github.event.pull_request.base.sha }}
+  head_ref:
+    description: 'Head branch or commit SHA'
+    required: false
+    default: ${{ github.head_ref || github.event.pull_request.head.sha }}
+  docs_dir:
+    description: 'Path to documentation directory'
+    required: false
+    default: 'docs'
+  confidence_threshold:
+    description: 'Minimum confidence score (0.0 - 1.0) required to report drift'
+    required: false
+    default: '0.75'
+  fail_on_drift:
+    description: 'Whether to fail the CI check if drift is detected'
+    required: false
+    default: 'true'
+  ollama_url:
+    description: 'Endpoint URL for local or hosted Ollama instance'
+    required: false
+    default: 'http://localhost:11434'
+  model_name:
+    description: 'LLM model name for verification'
+    required: false
+    default: 'gemma4:e4b'
+
+outputs:
+  drift_detected:
+    description: 'Whether any documentation drift was detected (true/false)'
+  drift_count:
+    description: 'Total number of drifted documentation sentences identified'
+  report_json:
+    description: 'File path to the generated JSON drift report'
+
+runs:
+  using: 'docker'
+  image: 'Dockerfile'
+  env:
+    GITHUB_TOKEN: ${{ inputs.github_token }}
+    BASE_REF: ${{ inputs.base_ref }}
+    HEAD_REF: ${{ inputs.head_ref }}
+    DOCS_DIR: ${{ inputs.docs_dir }}
+    CONFIDENCE_THRESHOLD: ${{ inputs.confidence_threshold }}
+    FAIL_ON_DRIFT: ${{ inputs.fail_on_drift }}
+    OLLAMA_URL: ${{ inputs.ollama_url }}
+    MODEL_NAME: ${{ inputs.model_name }}

@@ -1,0 +1,44 @@
+name: Documentation Drift Check (Self-Test)
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  drift-check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          cd backend
+          pip install -r requirements.txt
+
+      - name: Run docs-drift check (self-test)
+        uses: ./
+        with:
+          github_token: ${{ github.token }}
+          base_ref: ${{ github.base_ref }}
+          head_ref: ${{ github.head_ref }}
+          docs_dir: 'docs'
+          confidence_threshold: '0.75'
+          fail_on_drift: 'true'
+
+      - name: Upload drift report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: drift-report
+          path: /tmp/drift_report.json
