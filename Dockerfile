@@ -9,6 +9,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
+ENV PYTHONPATH="/app"
 
 # Install Python dependencies
 COPY backend/requirements.txt /app/requirements.txt
