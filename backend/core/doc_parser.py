@@ -51,6 +51,19 @@ INLINE_CODE_PATTERN = re.compile(r"(`{1,3})((?:(?!\1).)+)\1")
 # URLs
 URL_PATTERN = re.compile(r"https?://[^\s<>\]]+")
 
+# Ignored directory segments when scanning repository documentation
+IGNORE_SEGMENTS = {
+    "node_modules",
+    "vendor",
+    ".git",
+    ".venv",
+    "venv",
+    "__pycache__",
+    ".next",
+    "dist",
+    "build",
+}
+
 
 # ---------------------------------------------------------------------------
 # Sentence splitter (line-aware, abbreviation-aware)
@@ -407,7 +420,6 @@ class DocParser:
                 docs.append(rel)
                 seen.add(str(p))
 
-        IGNORE_SEGMENTS = {"node_modules", "vendor", ".git", ".venv", "venv", "__pycache__", ".next", "dist", "build"}
         # Top-level docs
         for name in ("README.md", "CONTRIBUTING.md", "ARCHITECTURE.md", "CHANGELOG.md", "LICENSE", "HACKATHON.md", "PLAN.md", "README.txt"):
             add_candidate(repo / name)

@@ -111,12 +111,21 @@ def check(
     # --- 2. Index documentation
     doc_parser = DocParser(docs_dir=docs_dir)
     repo_path = Path(repo).resolve()
-    if not parser.doc_files and not docs_dir:
+    if docs_dir:
+        docs_dir_path = Path(docs_dir)
+        if not docs_dir_path.is_absolute():
+            docs_dir_path = repo_path / docs_dir_path
+        if docs_dir_path.is_dir():
+            doc_parser.index_directory(str(docs_dir_path))
+        else:
+            # Fallback to repository root documentation discovery if docs_dir does not exist
+            doc_paths = doc_parser.find_documentation_files(str(repo_path))
+            for rel in doc_paths:
+                doc_parser.parse_file(str(repo_path / rel))
+    elif not parser.doc_files:
         doc_paths = doc_parser.find_documentation_files(str(repo_path))
         for rel in doc_paths:
             doc_parser.parse_file(str(repo_path / rel))
-    elif docs_dir:
-        doc_parser.index_directory(docs_dir)
 
     total_docs = sum(len(d.sentences) for d in doc_parser.documents.values())
 

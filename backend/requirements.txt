@@ -1,4 +1,7 @@
-# Documentation Drift Detection - Core Engine Dependencies
+# Documentation Drift Detection - Core Engine & API Dependencies
+fastapi>=0.111.0
+uvicorn>=0.30.0
+aiosqlite>=0.20.0
 pydantic>=2.7.0
 gitpython>=3.1.43
 unidiff>=0.7.5

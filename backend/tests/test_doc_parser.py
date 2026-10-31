@@ -94,5 +94,23 @@ def test_inline_code_not_split():
     assert "--timeout" in sents[0]
 
 
+def test_index_directory_ignores_node_modules(tmp_path):
+    """index_directory walks directory and skips IGNORE_SEGMENTS without NameError."""
+    docs_dir = tmp_path / "docs"
+    docs_dir.mkdir()
+    (docs_dir / "guide.md").write_text("# Guide\n\nDefault port is 8080.\n", encoding="utf-8")
+
+    nm_dir = docs_dir / "node_modules" / "pkg"
+    nm_dir.mkdir(parents=True)
+    (nm_dir / "README.md").write_text("# Ignored\n\nShould not be indexed.\n", encoding="utf-8")
+
+    parser = DocParser()
+    parser.index_directory(str(docs_dir))
+
+    assert len(parser.documents) == 1
+    indexed_paths = list(parser.documents.keys())
+    assert any("guide.md" in p for p in indexed_paths)
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

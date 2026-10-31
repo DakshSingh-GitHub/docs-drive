@@ -9,9 +9,12 @@ description = "Automated documentation drift detection for pull requests"
 authors = [
     { name = "HisenBugs", email = "team@isenbugs.dev" }
 ]
-readme = "../README.md"
+readme = { text = "Automated documentation drift detection for pull requests", content-type = "text/markdown" }
 requires-python = ">=3.9"
 dependencies = [
+    "fastapi>=0.111.0",
+    "uvicorn>=0.30.0",
+    "aiosqlite>=0.20.0",
     "pydantic>=2.7.0",
     "gitpython>=3.1.43",
     "unidiff>=0.7.5",
@@ -28,11 +31,11 @@ dependencies = [
 ]
 
 [project.scripts]
-docs-drift = "backend.cli:app"
+docs-drift = "cli:app"
 
 [tool.setuptools.packages.find]
 where = ["."]
-include = ["backend*"]
+include = ["core*", "api*", "github*", "evaluation*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
