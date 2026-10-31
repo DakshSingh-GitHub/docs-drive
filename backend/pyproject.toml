@@ -9,7 +9,6 @@ description = "Automated documentation drift detection for pull requests"
 authors = [
     { name = "HisenBugs", email = "team@isenbugs.dev" }
 ]
-readme = { text = "Automated documentation drift detection for pull requests", content-type = "text/markdown" }
 requires-python = ">=3.9"
 dependencies = [
     "fastapi>=0.111.0",
