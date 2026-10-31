@@ -410,6 +410,19 @@ class DiffParser:
                 "via parse_diff()."
             )
         repo = git.Repo(repo_path)
+
+        # Ensure base_ref exists locally; if not, fetch it from origin
+        # (GitHub Actions check out only the PR branch by default, so `main`
+        # may exist only on origin and not as a local branch.)
+        try:
+            repo.rev_parse(base_ref)
+        except Exception:
+            try:
+                repo.git.fetch("origin", f"{base_ref}:{base_ref}", "--depth=50")
+            except Exception:
+                # If origin fetch fails, try fetching all heads
+                repo.git.fetch("origin", "+refs/heads/*:refs/remotes/origin/*")
+
         diff_text = repo.git.diff(f"{base_ref}...{head_ref}")
         self.parse_diff(diff_text)
         return self
