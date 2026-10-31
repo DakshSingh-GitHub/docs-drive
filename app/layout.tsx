@@ -16,6 +16,16 @@ export const metadata: Metadata = {
   title: "DocsDrive — Documentation Integrity Engine",
   description:
     "DocsDrive detects documentation drift in pull requests — docs that code changes silently made wrong.",
+  icons: {
+    icon: [
+      { url: "/icon.svg", type: "image/svg+xml" },
+      { url: "/favicon.ico", sizes: "any" },
+    ],
+    shortcut: "/favicon.ico",
+    apple: [
+      { url: "/apple-icon.png", sizes: "180x180", type: "image/png" },
+    ],
+  },
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

@@ -72,3 +72,4 @@ PLAN.md
 vendor/**/node_modules/
 vendor/**/package-lock.json
 backend/drift_runs.db
+scripts/
