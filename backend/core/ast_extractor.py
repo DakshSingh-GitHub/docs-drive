@@ -23,6 +23,7 @@ from core.models import (
     CodeSymbolChange,
     SymbolType,
 )
+from core.serverless import is_serverless
 
 logger = logging.getLogger(__name__)
 
@@ -558,6 +559,11 @@ class ASTSymbolExtractor:
 
     def extract_from_diff_file(self, diff_file: DiffFile) -> List[CodeSymbolChange]:
         """Extract semantic code changes from a single file's diff."""
+        if is_serverless():
+            logger.debug(
+                "Running in serverless mode: using regex-only AST extraction "
+                "(tree-sitter grammars not available)"
+            )
         target_ext = Path(diff_file.target_file).suffix.lower()
         source_ext = Path(diff_file.source_file).suffix.lower() if diff_file.source_file else ""
 

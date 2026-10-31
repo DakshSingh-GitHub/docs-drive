@@ -21,7 +21,8 @@ from typing import Dict, List, Optional, Set, Tuple
 import git
 from unidiff import PatchSet
 
-from .models import DocSentence
+from core.models import DocSentence
+from core.serverless import is_serverless
 
 logger = logging.getLogger(__name__)
 
@@ -393,7 +394,21 @@ class DiffParser:
         return self
 
     def from_local_repo(self, repo_path: str, base_ref: str, head_ref: str) -> "DiffParser":
-        """Ingest a diff from a local git repository."""
+        """Ingest a diff from a local git repository.
+
+        In serverless environments (Vercel, AWS Lambda, etc.) the ``git``
+        binary and ``GitPython`` may not be available. In that case this
+        method raises a clear error suggesting the use of
+        :meth:`from_patch_file` or :meth:`from_github_pr` instead, which
+        work without a local git installation.
+        """
+        if is_serverless():
+            raise RuntimeError(
+                "from_local_repo() is not supported in serverless environments "
+                "(no git binary / GitPython). Use from_patch_file() or "
+                "from_github_pr() instead, or pass a pre-parsed diff string "
+                "via parse_diff()."
+            )
         repo = git.Repo(repo_path)
         diff_text = repo.git.diff(f"{base_ref}...{head_ref}")
         self.parse_diff(diff_text)
