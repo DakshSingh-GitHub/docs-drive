@@ -393,7 +393,80 @@ class DiffParser:
         self.parse_diff(diff_text)
         return self
 
-    def from_local_repo(self, repo_path: str, base_ref: str, head_ref: str) -> "DiffParser":
+    def _resolve_ref(self, repo: "git.Repo", ref: str, is_head: bool = False) -> str:
+        """Resolve a git ref name to a resolvable git reference or object.
+
+        Handles:
+          - Direct local branches/tags/commits (e.g. 'main', 'HEAD')
+          - Remote tracking branches (e.g. 'origin/main', 'refs/remotes/origin/main')
+          - Unfetched refs that need to be fetched from 'origin'
+          - CI detached HEAD (when head_ref is a PR branch name like 'phase-4-completion',
+            fallback to 'HEAD')
+          - Fallbacks for base_ref ('origin/main', 'origin/master', 'HEAD~1')
+        """
+        # 1. Direct match locally
+        try:
+            repo.rev_parse(ref)
+            return ref
+        except Exception:
+            pass
+
+        # 2. Check origin/ or refs/remotes/origin/ prefix
+        for prefix in [f"origin/{ref}", f"refs/remotes/origin/{ref}"]:
+            try:
+                repo.rev_parse(prefix)
+                return prefix
+            except Exception:
+                pass
+
+        # 3. Try fetching from origin
+        try:
+            repo.git.fetch("origin", f"+refs/heads/{ref}:refs/remotes/origin/{ref}", "--depth=50")
+        except Exception:
+            try:
+                repo.git.fetch("origin", f"{ref}:{ref}", "--depth=50")
+            except Exception:
+                try:
+                    repo.git.fetch("origin", "+refs/heads/*:refs/remotes/origin/*")
+                except Exception:
+                    pass
+
+        # 4. Check again after fetching
+        for cand in [ref, f"origin/{ref}", f"refs/remotes/origin/{ref}"]:
+            try:
+                repo.rev_parse(cand)
+                return cand
+            except Exception:
+                pass
+
+        # 5. Head-specific fallback:
+        # In GitHub Actions (actions/checkout), the PR head commit is already checked out as HEAD!
+        # If head_ref was passed as a branch name (e.g. phase-4-completion) that doesn't exist locally,
+        # HEAD is the exact checked-out commit we want to analyze.
+        if is_head:
+            try:
+                repo.rev_parse("HEAD")
+                logger.info("head_ref '%s' not found locally; falling back to current HEAD", ref)
+                return "HEAD"
+            except Exception:
+                pass
+
+        # 6. Base-specific fallback:
+        if not is_head:
+            for fallback in ["origin/main", "origin/master", "main", "master", "HEAD~1"]:
+                try:
+                    repo.rev_parse(fallback)
+                    logger.info("base_ref '%s' not found locally; falling back to '%s'", ref, fallback)
+                    return fallback
+                except Exception:
+                    pass
+
+        raise RuntimeError(
+            f"Cannot resolve git ref '{ref}' in repository {repo.working_dir}. "
+            "Ensure the branch exists locally or on remote."
+        )
+
+    def from_local_repo(self, repo_path: str, base_ref: str = "main", head_ref: str = "HEAD") -> "DiffParser":
         """Ingest a diff from a local git repository.
 
         In serverless environments (Vercel, AWS Lambda, etc.) the ``git``
@@ -411,19 +484,29 @@ class DiffParser:
             )
         repo = git.Repo(repo_path)
 
-        # Ensure base_ref exists locally; if not, fetch it from origin
-        # (GitHub Actions check out only the PR branch by default, so `main`
-        # may exist only on origin and not as a local branch.)
+        resolved_base = self._resolve_ref(repo, base_ref, is_head=False)
+        resolved_head = self._resolve_ref(repo, head_ref, is_head=True)
+
+        diff_text = ""
+        # Try three-dot diff first (merge-base to head), fall back to two-dot, then merge-base
         try:
-            repo.rev_parse(base_ref)
+            diff_text = repo.git.diff(f"{resolved_base}...{resolved_head}")
         except Exception:
             try:
-                repo.git.fetch("origin", f"{base_ref}:{base_ref}", "--depth=50")
+                diff_text = repo.git.diff(f"{resolved_base}..{resolved_head}")
             except Exception:
-                # If origin fetch fails, try fetching all heads
-                repo.git.fetch("origin", "+refs/heads/*:refs/remotes/origin/*")
+                try:
+                    merge_base = repo.git.merge_base(resolved_base, resolved_head)
+                    mb_str = merge_base[0].hexsha if hasattr(merge_base[0], "hexsha") else str(merge_base[0]).strip()
+                    diff_text = repo.git.diff(f"{mb_str}..{resolved_head}")
+                except Exception:
+                    try:
+                        diff_text = repo.git.diff(resolved_base, resolved_head)
+                    except Exception as err:
+                        raise RuntimeError(
+                            f"Failed to generate git diff between {resolved_base} and {resolved_head}: {err}"
+                        ) from err
 
-        diff_text = repo.git.diff(f"{base_ref}...{head_ref}")
         self.parse_diff(diff_text)
         return self
 
