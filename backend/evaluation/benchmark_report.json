@@ -1,0 +1,94 @@
+{
+  "dataset": "backend/evaluation/dataset/sample_cases.json",
+  "confidence_threshold": 0.5,
+  "llm_mode": "offline",
+  "n_scenarios": 6,
+  "precision": 1.0,
+  "recall": 0.75,
+  "f1": 0.8571428571428571,
+  "pass_rate": 0.8333333333333334,
+  "scenarios": [
+    {
+      "id": "scenario-01-renamed-flag",
+      "name": "CLI flag renamed in argparse",
+      "ground_truth": {
+        "has_drift": true,
+        "drift_type": "renamed_flag",
+        "affected_file": "README.md",
+        "expected_symbol": "--timeout-secs"
+      },
+      "tp": 1,
+      "fp": 0,
+      "fn": 0,
+      "passed": true,
+      "n_findings": 1
+    },
+    {
+      "id": "scenario-02-default-change",
+      "name": "Default timeout value changed",
+      "ground_truth": {
+        "has_drift": true,
+        "drift_type": "incorrect_default",
+        "affected_file": "docs/configuration.md",
+        "affected_line": 1
+      },
+      "tp": 1,
+      "fp": 0,
+      "fn": 0,
+      "passed": true,
+      "n_findings": 1
+    },
+    {
+      "id": "scenario-03-internal-refactor",
+      "name": "Internal helper refactor (no drift)",
+      "ground_truth": {
+        "has_drift": false
+      },
+      "tp": 0,
+      "fp": 0,
+      "fn": 0,
+      "passed": true,
+      "n_findings": 0
+    },
+    {
+      "id": "scenario-04-environment-variable-rename",
+      "name": "Environment variable renamed",
+      "ground_truth": {
+        "has_drift": true,
+        "drift_type": "renamed_flag",
+        "affected_file": "docs/secrets.md"
+      },
+      "tp": 1,
+      "fp": 0,
+      "fn": 0,
+      "passed": true,
+      "n_findings": 1
+    },
+    {
+      "id": "scenario-05-port-default-change",
+      "name": "Default listening port changed (8080 -> 3000)",
+      "ground_truth": {
+        "has_drift": true,
+        "drift_type": "incorrect_default",
+        "affected_file": "README.md"
+      },
+      "tp": 0,
+      "fp": 0,
+      "fn": 1,
+      "passed": false,
+      "n_findings": 0
+    },
+    {
+      "id": "scenario-06-documentation-already-updated",
+      "name": "PR already updated the doc (should be suppressed)",
+      "ground_truth": {
+        "has_drift": false
+      },
+      "tp": 0,
+      "fp": 0,
+      "fn": 0,
+      "passed": true,
+      "n_findings": 0
+    }
+  ]
+}

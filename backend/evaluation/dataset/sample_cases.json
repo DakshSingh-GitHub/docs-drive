@@ -1,0 +1,79 @@
+[
+  {
+    "id": "scenario-01-renamed-flag",
+    "name": "CLI flag renamed in argparse",
+    "drift_commit_diff": "diff --git a/cli.py b/cli.py\nindex abc123..def456 100644\n--- a/cli.py\n+++ b/cli.py\n@@ -5,7 +5,7 @@ parser = argparse.ArgumentParser()\n-    parser.add_argument('--timeout-secs', type=int, default=30)\n+    parser.add_argument('--timeout', type=int, default=60)\n     parser.add_argument('--verbose', action='store_true')",
+    "docs_content": {
+      "README.md": "Run the tool with `--timeout-secs 30` to configure the connection timeout."
+    },
+    "ground_truth": {
+      "has_drift": true,
+      "drift_type": "renamed_flag",
+      "affected_file": "README.md",
+      "expected_symbol": "--timeout-secs"
+    }
+  },
+  {
+    "id": "scenario-02-default-change",
+    "name": "Default timeout value changed",
+    "drift_commit_diff": "diff --git a/config.py b/config.py\nindex abc123..def456 100644\n--- a/config.py\n+++ b/config.py\n@@ -8,5 +8,5 @@ HOST = \"localhost\"\n-DEFAULT_TIMEOUT = 30\n+DEFAULT_TIMEOUT = 60\n TIMEOUT_UNIT = \"seconds\"",
+    "docs_content": {
+      "docs/configuration.md": "The default connection timeout is 30 seconds.",
+      "docs/api.md": "The server uses HTTP GET requests to fetch data."
+    },
+    "ground_truth": {
+      "has_drift": true,
+      "drift_type": "incorrect_default",
+      "affected_file": "docs/configuration.md",
+      "affected_line": 1
+    }
+  },
+  {
+    "id": "scenario-03-internal-refactor",
+    "name": "Internal helper refactor (no drift)",
+    "drift_commit_diff": "diff --git a/utils/helpers.py b/utils/helpers.py\nindex abc123..def456 100644\n--- a/utils/helpers.py\n+++ b/utils/helpers.py\n@@ -1,5 +1,5 @@\n-def _internal_worker(data):\n+def _process_internal(data):\n     return sanitize(data)\n\n def public_api(data):",
+    "docs_content": {
+      "README.md": "Our utility functions provide string sanitization and data processing."
+    },
+    "ground_truth": {
+      "has_drift": false
+    }
+  },
+  {
+    "id": "scenario-04-environment-variable-rename",
+    "name": "Environment variable renamed",
+    "drift_commit_diff": "diff --git a/settings.py b/settings.py\nindex abc123..def456 100644\n--- a/settings.py\n+++ b/settings.py\n@@ -3,5 +3,5 @@ import os\n-APP_SECRET = os.environ.get(\"APP_KEY_OLD\", \"default\")\n+APP_SECRET = os.environ.get(\"APP_KEY\", \"default\")",
+    "docs_content": {
+      "docs/secrets.md": "Set the APP_KEY_OLD environment variable before starting the server."
+    },
+    "ground_truth": {
+      "has_drift": true,
+      "drift_type": "renamed_flag",
+      "affected_file": "docs/secrets.md"
+    }
+  },
+  {
+    "id": "scenario-05-port-default-change",
+    "name": "Default listening port changed (8080 -> 3000)",
+    "drift_commit_diff": "diff --git a/server.py b/server.py\nindex abc123..def456 100644\n--- a/server.py\n+++ b/server.py\n@@ -10,7 +10,7 @@ def create_app():\n     app.config[\"HOST\"] = \"0.0.0.0\"\n-    app.config[\"PORT\"] = 8080\n+    app.config[\"PORT\"] = 3000\n     return app",
+    "docs_content": {
+      "README.md": "The server listens on port 8080 by default. Use `--port` to change it."
+    },
+    "ground_truth": {
+      "has_drift": true,
+      "drift_type": "incorrect_default",
+      "affected_file": "README.md"
+    }
+  },
+  {
+    "id": "scenario-06-documentation-already-updated",
+    "name": "PR already updated the doc (should be suppressed)",
+    "drift_commit_diff": "diff --git a/cli.py b/cli.py\nindex abc123..def456 100644\n--- a/cli.py\n+++ b/cli.py\n@@ -1,5 +1,5 @@\n-def connect(timeout=30):\n+def connect(timeout=60):\n     pass\ndiff --git a/README.md b/README.md\nindex 111..222 100644\n--- a/README.md\n+++ b/README.md\n@@ -5,4 +5,4 @@ The tool connects with a default timeout of 30 seconds.\n+The tool connects with a default timeout of 60 seconds.",
+    "docs_content": {
+      "README.md": "The tool connects with a default timeout of 60 seconds."
+    },
+    "ground_truth": {
+      "has_drift": false
+    }
+  }
+]

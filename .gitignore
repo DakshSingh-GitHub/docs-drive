@@ -10,6 +10,19 @@
 !.yarn/releases
 !.yarn/versions
 
+# Python
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+dist/
+build/
+.pytest_cache/
+.coverage
+.tox/
+
 # testing
 /coverage
 
@@ -42,5 +55,6 @@ next-env.d.ts
 
 # prompts
 prompts/
+prompt
 
 PLAN.md
