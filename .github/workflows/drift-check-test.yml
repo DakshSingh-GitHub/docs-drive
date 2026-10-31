@@ -36,8 +36,8 @@ jobs:
         uses: ./
         with:
           github_token: ${{ github.token }}
-          base_ref: ${{ github.base_ref }}
-          head_ref: ${{ github.head_ref }}
+          base_ref: ${{ github.base_ref || github.event.before || 'HEAD~1' }}
+          head_ref: ${{ github.head_ref || github.sha || 'HEAD' }}
           docs_dir: 'docs'
           confidence_threshold: '0.75'
           fail_on_drift: 'true'
