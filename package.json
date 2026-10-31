@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "docsdrive:world:build": "node scripts/build-docsdrive-world.mjs"
   },
   "dependencies": {
     "next": "16.4.3",

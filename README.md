@@ -532,6 +532,39 @@ See `MIGRATION.md` at the repository root for the complete frontend integration 
 - Where to alter values
 - Test commands
 
+### 11.1 The 3D Workstation Experience
+
+The DocsDrive landing page (`/`) and `/workstation` render an interactive 3D
+retro workstation — a fully explorable room with a CRT computer that runs the
+**DocsDrive Terminal** inside its monitor, powered by the same FastAPI
+backend. The 3D environment is based on
+[henryjeff/portfolio-website](https://github.com/henryjeff/portfolio-website)
+(MIT, © 2024 Henry Heffernan — see `THIRD_PARTY_NOTICES.md`), rebranded and
+retargeted to DocsDrive: a custom DDBIOS boot sequence, DocsDrive computer
+markings, and a purpose-built terminal replacing the original inner app.
+
+| Route | What it is |
+|---|---|
+| `/` | Landing page — the 3D workstation is the hero |
+| `/workstation` | Full-screen 3D workstation experience |
+| `/terminal` | Standalone DocsDrive terminal (same app, in the browser) |
+| `/terminal?embed=1` | Chrome-free terminal rendered inside the CRT |
+
+Terminal commands: `help`, `about`, `health`, `analyze-pr <repo_url> <pr>`,
+`runs`, `finding`, `fix`, `scenarios`, `demo <scenario_id>`, `clear` —
+all backed by the real API (`NEXT_PUBLIC_API_URL`, default
+`http://localhost:8000`); nothing is simulated.
+
+Rebuilding the isolated 3D app (outputs to `public/docsdrive-world/`):
+
+```bash
+npm run docsdrive:world:build
+```
+
+Integration details: `docs/HENRY_3D_SCENE_AUDIT.md`,
+`docs/DOCSDRIVE_FRONTEND_ARCHITECTURE.md`. Verification screenshots:
+`docs/screenshots/`.
+
 ---
 
 ## 12. Technology Stack
