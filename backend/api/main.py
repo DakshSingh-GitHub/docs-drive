@@ -70,16 +70,18 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# CORS for Next.js frontend
-cors_origins = os.environ.get(
-    "CORS_ORIGINS",
-    "http://localhost:3000,http://127.0.0.1:3000,http://localhost:3001,http://127.0.0.1:3001",
-).split(",")
+# CORS for Next.js frontend (local + Vercel deployments)
+cors_origins_env = os.environ.get("CORS_ORIGINS", "*")
+cors_origins = (
+    ["*"]
+    if cors_origins_env.strip() == "*"
+    else [o.strip() for o in cors_origins_env.split(",") if o.strip()]
+)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[o.strip() for o in cors_origins if o.strip()],
-    allow_credentials=True,
+    allow_origins=cors_origins,
+    allow_credentials=cors_origins != ["*"],
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -89,8 +91,21 @@ app.include_router(routes.router, prefix="/api")
 
 
 # ---------------------------------------------------------------------------
-# Health
+# Root & Health
 # ---------------------------------------------------------------------------
+
+@app.get("/", tags=["health"])
+async def root() -> Dict[str, Any]:
+    """Root status endpoint for standalone backend deployment."""
+    return {
+        "service": "docs-drift API",
+        "status": "ok",
+        "version": "1.0.0",
+        "docs": "/docs",
+        "health": "/api/health",
+        "scenarios": "/api/playground/scenarios",
+    }
+
 
 @app.get("/api/health", response_model=HealthResponse, tags=["health"])
 async def health() -> HealthResponse:

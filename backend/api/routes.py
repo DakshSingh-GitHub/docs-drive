@@ -272,6 +272,7 @@ _TRACKED_REPOS: Dict[str, RepositoryTrack] = {}
 # (not embedded in code) to avoid mock data in the application.
 
 _DEMO_SCENARIOS_DIR = Path(__file__).resolve().parent.parent.parent / "demo" / "scenarios"
+_BACKEND_DEMO_SCENARIOS_DIR = Path(__file__).resolve().parent.parent / "demo" / "scenarios"
 
 
 def _load_demo_scenarios() -> List[Scenario]:
@@ -281,9 +282,14 @@ def _load_demo_scenarios() -> List[Scenario]:
     valid scenario files. No mock data is embedded in this module.
     """
     scenarios: List[Scenario] = []
-    if not _DEMO_SCENARIOS_DIR.is_dir():
+    scenarios_dir = (
+        _DEMO_SCENARIOS_DIR
+        if _DEMO_SCENARIOS_DIR.is_dir()
+        else _BACKEND_DEMO_SCENARIOS_DIR
+    )
+    if not scenarios_dir.is_dir():
         return scenarios
-    for scenario_file in sorted(_DEMO_SCENARIOS_DIR.glob("*/scenario.json")):
+    for scenario_file in sorted(scenarios_dir.glob("*/scenario.json")):
         try:
             data = json.loads(scenario_file.read_text(encoding="utf-8"))
             scenarios.append(Scenario(**data))

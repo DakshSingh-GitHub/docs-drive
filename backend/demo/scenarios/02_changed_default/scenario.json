@@ -1,0 +1,17 @@
+{
+  "id": "scenario-02-changed-default",
+  "name": "Default Port Changed",
+  "description": "Default server port changed from 8080 to 3000",
+  "category": "incorrect_default",
+  "severity": "medium",
+  "diff": "diff --git a/config.py b/config.py\nindex abc123..def456 100644\n--- a/config.py\n+++ b/config.py\n@@ -10,3 +10,3 @@ HOST = \"localhost\"\n-DEFAULT_PORT = 8080\n+DEFAULT_PORT = 3000",
+  "docs": {
+    "docs/setup.md": "# Setup\n\nThe development server listens on port 8080 by default.\n"
+  },
+  "expected_drift": true,
+  "expected_file": "docs/setup.md",
+  "expected_symbol": "8080",
+  "drift_type": "incorrect_default",
+  "severity": "medium",
+  "description_for_judges": "The default server port was changed from 8080 to 3000 in config.py, but the documentation still states port 8080. The system detects this default value discrepancy in the documentation table."
+}

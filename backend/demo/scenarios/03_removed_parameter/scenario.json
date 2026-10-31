@@ -1,0 +1,17 @@
+{
+  "id": "scenario-03-removed-parameter",
+  "name": "API Parameter Removed",
+  "description": "Deprecated parameter verify_ssl removed from Client.connect()",
+  "category": "param_removed",
+  "severity": "critical",
+  "diff": "diff --git a/client.py b/client.py\nindex abc123..def456 100644\n--- a/client.py\n+++ b/client.py\n@@ -10,7 +10,7 @@ class Client:\n-    def connect(self, host, port, verify_ssl=True):\n+    def connect(self, host, port):\n         pass",
+  "docs": {
+    "docs/client.md": "# Client API\n\nTo connect, call `client.connect(host, port, verify_ssl=False)` to disable SSL verification.\n"
+  },
+  "expected_drift": true,
+  "expected_file": "docs/client.md",
+  "expected_symbol": "verify_ssl",
+  "drift_type": "param_removed",
+  "severity": "critical",
+  "description_for_judges": "The `verify_ssl` parameter was removed from the `connect()` method, but the documentation still instructs users to pass it. This is a breaking change that the system flags as critical severity."
+}

@@ -1,0 +1,26 @@
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "api/main.py",
+      "use": "@vercel/python",
+      "config": {
+        "includeFiles": "demo/**"
+      }
+    }
+  ],
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "api/main.py"
+    }
+  ],
+  "env": {
+    "PYTHONPATH": ".",
+    "GIT_PYTHON_REFRESH": "quiet",
+    "CONFIDENCE_THRESHOLD": "0.75",
+    "FAIL_ON_DRIFT": "true",
+    "OLLAMA_URL": "http://localhost:11434",
+    "MODEL_NAME": "gemma4:e4b"
+  }
+}
