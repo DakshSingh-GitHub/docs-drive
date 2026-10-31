@@ -162,5 +162,50 @@ def test_determine_check_conclusion():
     )
 
 
+def test_main_handles_403_gracefully(tmp_path, monkeypatch):
+    """When GitHub token lacks write permissions (HTTP 403), main() should log
+    a warning and write to GITHUB_STEP_SUMMARY instead of crashing."""
+    import json
+    import httpx
+    from github import pr_commenter
+
+    report_path = tmp_path / "report.json"
+    report_path.write_text(json.dumps({"findings": []}), encoding="utf-8")
+    summary_file = tmp_path / "step_summary.md"
+    monkeypatch.setenv("GITHUB_STEP_SUMMARY", str(summary_file))
+
+    def fake_request(self, method, path, json_body=None):
+        req = httpx.Request(method, f"https://api.github.com{path}")
+        if method == "GET" and "/comments" in path:
+            return httpx.Response(200, json=[], request=req)
+        if method == "GET" and "/pulls/" in path:
+            return httpx.Response(200, json={"head": {"sha": "abc1234"}}, request=req)
+        # Return 403 on POST (creating comment or check run)
+        return httpx.Response(
+            403,
+            json={"message": "Resource not accessible by integration"},
+            request=req,
+        )
+
+    monkeypatch.setattr(pr_commenter.PRCommenter, "_request", fake_request)
+    monkeypatch.setattr(
+        "sys.argv",
+        [
+            "pr_commenter.py",
+            "--owner", "DakshSingh-GitHub",
+            "--repo", "docs-drive",
+            "--pr-number", "1",
+            "--token", "ghs_readonly_token",
+            "--report", str(report_path),
+            "--fail-on-drift", "false",
+        ],
+    )
+
+    # Should complete without raising HTTPStatusError
+    pr_commenter.main()
+    assert summary_file.exists()
+    assert "<!-- docs-drift-bot-summary -->" in summary_file.read_text(encoding="utf-8")
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

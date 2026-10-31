@@ -381,13 +381,35 @@ def main() -> None:
 
     # 1. Master summary comment (idempotent)
     summary_body = render_summary_body(findings)
-    existing = commenter.find_existing_summary_comment()
-    if existing:
-        commenter.update_summary_comment(existing["id"], summary_body)
-        logger.info("Updated existing summary comment #%d", existing["id"])
-    else:
-        commenter.post_summary_comment(summary_body)
-        logger.info("Posted new summary comment")
+
+    # Also write to GITHUB_STEP_SUMMARY if available in GitHub Actions
+    step_summary_path = os.environ.get("GITHUB_STEP_SUMMARY")
+    if step_summary_path:
+        try:
+            with open(step_summary_path, "a", encoding="utf-8") as sf:
+                sf.write(summary_body + "\n")
+            logger.info("Wrote summary report to GITHUB_STEP_SUMMARY")
+        except Exception as exc:
+            logger.warning("Could not write to GITHUB_STEP_SUMMARY: %s", exc)
+
+    try:
+        existing = commenter.find_existing_summary_comment()
+        if existing:
+            commenter.update_summary_comment(existing["id"], summary_body)
+            logger.info("Updated existing summary comment #%d", existing["id"])
+        else:
+            commenter.post_summary_comment(summary_body)
+            logger.info("Posted new summary comment")
+    except httpx.HTTPStatusError as exc:
+        if exc.response.status_code == 403:
+            logger.warning(
+                "Insufficient token permissions (HTTP 403) to post PR comment. "
+                "Ensure 'permissions: pull-requests: write' and 'issues: write' are set in the workflow YAML."
+            )
+            print("\n=== Documentation Drift Summary ===\n")
+            print(summary_body)
+        else:
+            raise
 
     # 2. Inline review comments (only for doc lines touched in this PR)
     # Determine which doc lines were touched in the PR by examining the diff
@@ -435,12 +457,18 @@ def main() -> None:
     inline_comments = build_inline_comments(findings, pr_touched_doc_lines)
     if inline_comments:
         review_body = f"docs-drift found {len(inline_comments)} inline issue(s) in documentation touched by this PR."
-        commenter.post_inline_review(
-            body=review_body,
-            comments=inline_comments,
-            event="COMMENT",
-        )
-        logger.info("Posted inline review with %d comment(s)", len(inline_comments))
+        try:
+            commenter.post_inline_review(
+                body=review_body,
+                comments=inline_comments,
+                event="COMMENT",
+            )
+            logger.info("Posted inline review with %d comment(s)", len(inline_comments))
+        except httpx.HTTPStatusError as exc:
+            if exc.response.status_code == 403:
+                logger.warning("Insufficient token permissions (HTTP 403) to post inline review.")
+            else:
+                raise
     else:
         logger.info("No inline review comments (no doc lines touched in PR)")
 
@@ -450,16 +478,25 @@ def main() -> None:
         findings, fail_on_drift=(args.fail_on_drift.lower() == "true")
     )
     if head_sha:
-        commenter.create_check_run(
-            head_sha=head_sha,
-            conclusion=conclusion,
-            annotations=annotations,
-        )
-        logger.info(
-            "Created check run (conclusion=%s, %d annotations)",
-            conclusion,
-            len(annotations),
-        )
+        try:
+            commenter.create_check_run(
+                head_sha=head_sha,
+                conclusion=conclusion,
+                annotations=annotations,
+            )
+            logger.info(
+                "Created check run (conclusion=%s, %d annotations)",
+                conclusion,
+                len(annotations),
+            )
+        except httpx.HTTPStatusError as exc:
+            if exc.response.status_code == 403:
+                logger.warning(
+                    "Insufficient token permissions (HTTP 403) to create check run. "
+                    "Ensure 'permissions: checks: write' is set in the workflow YAML."
+                )
+            else:
+                raise
     else:
         logger.warning("Skipping check run (no head SHA available)")
 
