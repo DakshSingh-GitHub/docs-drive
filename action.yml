@@ -10,11 +10,11 @@ inputs:
   base_ref:
     description: 'Base branch or commit SHA (e.g. main)'
     required: false
-    default: ${{ github.base_ref || github.event.pull_request.base.sha }}
+    default: ${{ github.base_ref || github.event.pull_request.base.sha || github.event.before || 'HEAD~1' }}
   head_ref:
     description: 'Head branch or commit SHA'
     required: false
-    default: ${{ github.head_ref || github.event.pull_request.head.sha }}
+    default: ${{ github.head_ref || github.event.pull_request.head.sha || github.sha || 'HEAD' }}
   docs_dir:
     description: 'Path to documentation directory'
     required: false

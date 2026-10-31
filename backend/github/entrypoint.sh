@@ -10,10 +10,15 @@ set -euo pipefail
 
 echo "=== docs-drift GitHub Action ==="
 
-# 1. Validate required environment variables
+# 1. Validate required environment variables (with fallbacks for push / workflow_dispatch events)
 : "${GITHUB_TOKEN:?GITHUB_TOKEN is required}"
-: "${BASE_REF:?BASE_REF is required}"
-: "${HEAD_REF:?HEAD_REF is required}"
+BASE_REF="${BASE_REF:-${GITHUB_BASE_REF:-HEAD~1}}"
+HEAD_REF="${HEAD_REF:-${GITHUB_HEAD_REF:-${GITHUB_SHA:-HEAD}}}"
+
+# Handle initial push event where before SHA is all zeros
+if [ "$BASE_REF" = "0000000000000000000000000000000000000000" ]; then
+    BASE_REF="HEAD~1"
+fi
 
 CONFIDENCE_THRESHOLD="${CONFIDENCE_THRESHOLD:-0.75}"
 FAIL_ON_DRIFT="${FAIL_ON_DRIFT:-true}"
