@@ -57,4 +57,7 @@ next-env.d.ts
 prompts/
 prompt
 
+# demo
+/demo/
+
 PLAN.md
