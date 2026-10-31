@@ -28,7 +28,9 @@ from .llm_client import LLMClient, LLMResult
 
 logger = logging.getLogger(__name__)
 
-CONFIDENCE_THRESHOLD = 0.70
+import os
+
+CONFIDENCE_THRESHOLD = float(os.environ.get("CONFIDENCE_THRESHOLD", "0.70"))
 
 # Few-shot exemplars (positive drift case)
 POSITVE_EXEMPLAR = {

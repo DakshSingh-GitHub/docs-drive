@@ -7,6 +7,8 @@ unavailable. This keeps the full pipeline runnable without network access.
 
 from __future__ import annotations
 
+import os
+
 import hashlib
 import logging
 import math
@@ -14,6 +16,9 @@ from enum import Enum
 from typing import Dict, List, Optional, Tuple
 
 logger = logging.getLogger(__name__)
+
+OLLAMA_URL = os.environ.get("OLLAMA_URL", "http://localhost:11434")
+EMBEDDING_MODEL = os.environ.get("EMBEDDING_MODEL", "nomic-embed-text")
 
 try:
     import ollama
@@ -65,8 +70,8 @@ class EmbeddingService:
 
     def __init__(
         self,
-        model_name: str = "nomic-embed-text",
-        host: str = "http://localhost:11434",
+        model_name: str = EMBEDDING_MODEL,
+        host: str = OLLAMA_URL,
         mode: EmbeddingMode = EmbeddingMode.AUTO,
         openai_key: Optional[str] = None,
         anthropic_key: Optional[str] = None,

@@ -7,6 +7,8 @@ verdict so the pipeline never breaks when no LLM is available.
 
 from __future__ import annotations
 
+import os
+
 import json
 import logging
 import re
@@ -28,6 +30,9 @@ except ImportError:
 
 logger = logging.getLogger(__name__)
 
+OLLAMA_URL = os.environ.get("OLLAMA_URL", "http://localhost:11434")
+MODEL_NAME = os.environ.get("MODEL_NAME", "gemma4:e4b")
+
 
 @dataclass
 class LLMResult:
@@ -46,8 +51,8 @@ class LLMClient:
     """Unified LLM client for Ollama / OpenAI / Anthropic."""
 
     MODELS = {
-        "auto": "gemma4:e4b",
-        "ollama": "gemma4:e4b",
+        "auto": MODEL_NAME,
+        "ollama": MODEL_NAME,
         "openai": "gpt-4o",
         "anthropic": "claude-3-5-sonnet-20240620",
     }
@@ -55,7 +60,7 @@ class LLMClient:
     def __init__(
         self,
         mode: str = "auto",
-        host: str = "http://localhost:11434",
+        host: str = OLLAMA_URL,
         temperature: float = 0.1,
         max_retries: int = 3,
         openai_key: Optional[str] = None,
