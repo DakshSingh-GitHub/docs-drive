@@ -17,13 +17,13 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-from core.diff_parser import DiffFile, DiffHunk
-from core.models import (
+from .diff_parser import DiffFile, DiffHunk
+from .models import (
     ChangeType,
     CodeSymbolChange,
     SymbolType,
 )
-from core.serverless import is_serverless
+from .serverless import is_serverless
 
 logger = logging.getLogger(__name__)
 
@@ -632,8 +632,7 @@ index abc..def 100644
 +def fetch_data_cached():
      pass
 """
-    from core.diff_parser import parse_diff
-    from core.ast_extractor import ASTSymbolExtractor
+    from .diff_parser import parse_diff
 
     parser = parse_diff(sample)
     extractor = ASTSymbolExtractor()

@@ -464,8 +464,8 @@ def detect_documentation_drift(
 
 if __name__ == "__main__":
     # Demo: verify a sample pair
-    from core.models import ChangeType, SymbolType
-    from core.doc_parser import DocParser
+    from .models import ChangeType, SymbolType
+    from .doc_parser import DocParser
 
     change = CodeSymbolChange(
         file_path="cli.py",

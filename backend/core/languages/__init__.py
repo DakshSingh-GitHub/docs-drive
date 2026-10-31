@@ -7,7 +7,7 @@ from __future__ import annotations
 
 from typing import Dict, Optional
 
-from core.ast_extractor import (
+from ..ast_extractor import (
     JavaScriptExtractor,
     LanguageExtractor,
     PythonExtractor,

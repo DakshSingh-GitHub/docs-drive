@@ -25,7 +25,7 @@ try:
 except ImportError:
     MARKDOWN_IT_AVAILABLE = False
 
-from core.models import DocSentence
+from .models import DocSentence
 
 logger = logging.getLogger(__name__)
 

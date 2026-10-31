@@ -21,8 +21,8 @@ from typing import Dict, List, Optional, Set, Tuple
 import git
 from unidiff import PatchSet
 
-from core.models import DocSentence
-from core.serverless import is_serverless
+from .models import DocSentence
+from .serverless import is_serverless
 
 logger = logging.getLogger(__name__)
 

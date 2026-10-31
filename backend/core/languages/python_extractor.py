@@ -12,8 +12,8 @@ import re
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-from core.diff_parser import DiffHunk
-from core.models import (
+from ..diff_parser import DiffHunk
+from ..models import (
     ChangeType,
     CodeSymbolChange,
     SymbolType,
