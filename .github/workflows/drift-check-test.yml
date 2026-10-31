@@ -7,6 +7,12 @@ on:
     branches: [main]
   workflow_dispatch:
 
+permissions:
+  contents: read
+  issues: write
+  pull-requests: write
+  checks: write
+
 jobs:
   drift-check:
     runs-on: ubuntu-latest

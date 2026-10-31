@@ -8,7 +8,8 @@ from __future__ import annotations
 
 import json
 import logging
-from typing import Any, Dict
+from pathlib import Path
+from typing import Any, Dict, List
 
 from fastapi import APIRouter, HTTPException
 import httpx
@@ -26,15 +27,35 @@ from api.schemas import (
     AnalyzeDiffResponse,
     AnalyzePRRequest,
     AnalyzePRResponse,
+    ApplyFixRequest,
+    ApplyFixResponse,
     GenerateFixRequest,
     GenerateFixResponse,
+    RepositoryListResponse,
+    RepositoryTrack,
     RunStatusResponse,
+    Scenario,
+    SideBySideRequest,
+    SideBySideResponse,
 )
 from .worker import get_job_manager
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
+
+
+# ---------------------------------------------------------------------------
+# Helpers
+# ---------------------------------------------------------------------------
+
+def _finding_to_dict(finding: Any) -> Dict[str, Any]:
+    """Normalize a finding (Pydantic model or dict) to a plain dict."""
+    if hasattr(finding, "model_dump"):
+        return finding.model_dump()
+    if isinstance(finding, dict):
+        return finding
+    return {"id": getattr(finding, "id", ""), "affected_sentence": ""}
 
 
 # ---------------------------------------------------------------------------
@@ -81,41 +102,20 @@ async def analyze_pr(req: AnalyzePRRequest) -> AnalyzePRResponse:
 async def analyze_diff(req: AnalyzeDiffRequest) -> AnalyzeDiffResponse:
     """Playground mode: analyze a raw diff and documentation content.
 
-    Runs the full drift pipeline synchronously and returns findings.
-    In serverless environments, runs synchronously and returns results immediately.
+    Runs the full drift pipeline synchronously and returns findings immediately.
     """
     manager = get_job_manager()
-    if is_serverless():
-        run_id = manager.run_diff_analysis_sync(
-            diff_text=req.diff_text,
-            docs=[d.model_dump() for d in req.docs],
-            confidence_threshold=req.confidence_threshold,
-        )
-        job = manager.get_job(run_id)
-        report = job.report.model_dump() if job and job.report else None
-        findings_count = len(job.report.findings) if job and job.report else 0
-        return AnalyzeDiffResponse(
-            run_id=run_id,
-            status=job.status if job else "completed",
-            findings_count=findings_count,
-            report=report,
-        )
-    run_id = await manager.enqueue_diff_analysis(
+    run_id = manager.run_diff_analysis_sync(
         diff_text=req.diff_text,
         docs=[d.model_dump() for d in req.docs],
         confidence_threshold=req.confidence_threshold,
     )
-
     job = manager.get_job(run_id)
-    report = None
-    findings_count = 0
-    if job and job.report:
-        findings_count = len(job.report.findings)
-        report = job.report.model_dump()
-
+    report = job.report.model_dump() if job and job.report else None
+    findings_count = len(job.report.findings) if job and job.report else 0
     return AnalyzeDiffResponse(
         run_id=run_id,
-        status=job.status if job else "queued",
+        status=job.status if job else "completed",
         findings_count=findings_count,
         report=report,
     )
@@ -259,4 +259,169 @@ unified git patch. Output JSON:
         suggested_paragraph=suggested_paragraph,
         git_patch=git_patch,
         explanation=explanation,
+    )
+
+# ---------------------------------------------------------------------------
+# Phase 4: Frontend Dashboard Backend Extensions
+# ---------------------------------------------------------------------------
+
+# In-memory repository tracking (backed by SQLite for persistence)
+_TRACKED_REPOS: Dict[str, RepositoryTrack] = {}
+
+# Curated demo scenarios are loaded from external demo/scenarios/*.json files
+# (not embedded in code) to avoid mock data in the application.
+
+_DEMO_SCENARIOS_DIR = Path(__file__).resolve().parent.parent.parent / "demo" / "scenarios"
+
+
+def _load_demo_scenarios() -> List[Scenario]:
+    """Load demo scenarios from external JSON files in demo/scenarios/.
+
+    Returns an empty list if the directory does not exist or contains no
+    valid scenario files. No mock data is embedded in this module.
+    """
+    scenarios: List[Scenario] = []
+    if not _DEMO_SCENARIOS_DIR.is_dir():
+        return scenarios
+    for scenario_file in sorted(_DEMO_SCENARIOS_DIR.glob("*/scenario.json")):
+        try:
+            data = json.loads(scenario_file.read_text(encoding="utf-8"))
+            scenarios.append(Scenario(**data))
+        except Exception:  # pragma: no cover - defensive
+            logger.warning("Failed to load demo scenario: %s", scenario_file)
+    return scenarios
+
+
+@router.get("/playground/scenarios", tags=["playground"])
+async def get_playground_scenarios():
+    """Return curated demo scenarios loaded from external files.
+
+    Scenarios are read from demo/scenarios/*/scenario.json — no mock data
+    is embedded in this module.
+    """
+    return {"scenarios": [s.model_dump() for s in _load_demo_scenarios()]}
+
+
+@router.get("/runs/{run_id}/findings/{finding_id}", tags=["runs"])
+async def get_finding_detail(run_id: str, finding_id: str):
+    """Return detailed finding with isolated code diff hunk and doc sentence
+    for side-by-side comparison view."""
+    manager = get_job_manager()
+    job = manager.get_job(run_id)
+
+    if not job:
+        db = get_db()
+        run = db.get_run(run_id)
+        if not run:
+            raise HTTPException(status_code=404, detail=f"Run {run_id} not found")
+        report_json = run.get("report_json")
+        if not report_json:
+            raise HTTPException(
+                status_code=404, detail=f"No report found for run {run_id}"
+            )
+        report = json.loads(report_json)
+    else:
+        report = job.report.model_dump() if job.report else None
+        if not report:
+            raise HTTPException(
+                status_code=404, detail=f"No report found for run {run_id}"
+            )
+
+    findings = report.get("findings", [])
+    finding = None
+    for f in findings:
+        fd = _finding_to_dict(f)
+        if fd.get("id") == finding_id:
+            finding = fd
+            break
+
+    if not finding:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Finding {finding_id} not found in run {run_id}",
+        )
+
+    return SideBySideResponse(
+        finding=finding,
+        code_diff_hunk=finding.get("code_diff_snippet", ""),
+        doc_sentence=finding.get("affected_sentence", ""),
+        doc_line_number=finding.get("doc_line_number", 0),
+    )
+
+
+@router.post("/fix/apply", response_model=ApplyFixResponse, tags=["fix"])
+async def apply_fix(req: ApplyFixRequest) -> ApplyFixResponse:
+    """Generate a downloadable git patch for applying the suggested fix."""
+    manager = get_job_manager()
+
+    # Find the finding across all jobs
+    finding: Dict[str, Any] = {}
+    for job in manager.get_all_jobs():
+        if job.report:
+            for f in job.report.findings:
+                fd = _finding_to_dict(f)
+                if fd.get("id") == req.finding_id:
+                    finding = fd
+                    break
+        if finding:
+            break
+
+    if not finding:
+        # Try SQLite
+        db = get_db()
+        runs = db.list_runs(limit=100)
+        for run in runs:
+            if run.get("report_json"):
+                report = json.loads(run["report_json"])
+                for f in report.get("findings", []):
+                    if f.get("id") == req.finding_id:
+                        finding = f
+                        break
+            if finding:
+                break
+
+    if not finding:
+        raise HTTPException(
+            status_code=404, detail=f"Finding {req.finding_id} not found"
+        )
+
+    old_sentence = finding.get("affected_sentence", "")
+    new_sentence = finding.get("suggested_fix", old_sentence)
+    doc_path = finding.get("doc_path", "doc.md")
+    doc_line = finding.get("doc_line_number", 1)
+
+    # Build a unified diff patch
+    patch_lines = [
+        f"--- a/{doc_path}",
+        f"+++ b/{doc_path}",
+        f"@@ -{doc_line},1 +{doc_line},1 @@",
+        f"-{old_sentence}",
+        f"+{new_sentence}",
+    ]
+    git_patch = "\n".join(patch_lines) + "\n"
+
+    safe_name = doc_path.replace("/", "_").replace(".", "_")
+    filename = f"fix-drift-{safe_name}-L{doc_line}.patch"
+
+    return ApplyFixResponse(
+        git_patch=git_patch,
+        filename=filename,
+    )
+
+
+@router.get("/repositories", response_model=RepositoryListResponse, tags=["repositories"])
+async def list_repositories():
+    """Return tracked/monitored repositories."""
+    return RepositoryListResponse(
+        repositories=list(_TRACKED_REPOS.values())
+    )
+
+
+@router.post("/repositories", response_model=RepositoryListResponse, tags=["repositories"])
+async def add_repository(req: RepositoryTrack):
+    """Add a repository to track for drift analysis."""
+    key = f"{req.owner}/{req.repo}"
+    _TRACKED_REPOS[key] = req
+    return RepositoryListResponse(
+        repositories=list(_TRACKED_REPOS.values())
     )

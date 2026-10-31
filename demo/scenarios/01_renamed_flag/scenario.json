@@ -1,0 +1,17 @@
+{
+  "id": "scenario-01-renamed-flag",
+  "name": "CLI Flag Renamed",
+  "description": "--timeout-secs renamed to --timeout in CLI argument parser",
+  "category": "renamed_flag",
+  "severity": "high",
+  "diff": "diff --git a/cli.py b/cli.py\nindex abc123..def456 100644\n--- a/cli.py\n+++ b/cli.py\n@@ -5,7 +5,7 @@ parser = argparse.ArgumentParser()\n-    parser.add_argument('--timeout-secs', type=int, default=30)\n+    parser.add_argument('--timeout', type=int, default=60)\n     parser.add_argument('--verbose', action='store_true')",
+  "docs": {
+    "README.md": "# CLI Tool\n\nRun the tool with `--timeout-secs 30` to configure the connection timeout.\n\nThe default value is 30 seconds.\n"
+  },
+  "expected_drift": true,
+  "expected_file": "README.md",
+  "expected_symbol": "--timeout-secs",
+  "drift_type": "renamed_flag",
+  "severity": "high",
+  "description_for_judges": "The CLI flag `--timeout-secs` was renamed to `--timeout` in the code, but the README still tells users to use the old flag name. The system detects this exact sentence and links it to the responsible code line."
+}

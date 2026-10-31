@@ -29,7 +29,14 @@ git config --global --add safe.directory "$GITHUB_WORKSPACE" 2>/dev/null || true
 # Fetch the base commit if needed (shallow fetch)
 if [ -n "$BASE_REF" ]; then
     echo "Fetching base ref: $BASE_REF"
-    git fetch origin "$BASE_REF" --depth=50 2>/dev/null || git fetch origin "$BASE_REF" --depth=50 || true
+    git fetch origin "+refs/heads/$BASE_REF:refs/remotes/origin/$BASE_REF" --depth=50 2>/dev/null || \
+    git fetch origin "$BASE_REF" --depth=50 2>/dev/null || true
+fi
+
+# Fetch the head ref if needed
+if [ -n "$HEAD_REF" ] && [ "$HEAD_REF" != "HEAD" ]; then
+    echo "Fetching head ref: $HEAD_REF"
+    git fetch origin "+refs/heads/$HEAD_REF:refs/remotes/origin/$HEAD_REF" --depth=50 2>/dev/null || true
 fi
 
 # Determine PR metadata for the commenter

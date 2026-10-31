@@ -199,5 +199,66 @@ def test_parse_from_patch_file(tmp_path):
     assert parser.has_code_changes
 
 
+def test_from_local_repo_with_detached_head_and_remote_branch(tmp_path):
+    """Simulate CI environment where PR branch is checked out as detached HEAD
+    and head_ref name is not a local branch, while base_ref is on origin/."""
+    import git
+
+    repo = git.Repo.init(str(tmp_path))
+    file_path = tmp_path / "sample.py"
+    file_path.write_text("x = 1\n", encoding="utf-8")
+    repo.index.add(["sample.py"])
+    c1 = repo.index.commit("initial commit")
+    repo.create_head("main")
+
+    feat = repo.create_head("phase-4-completion")
+    repo.head.reference = feat
+    file_path.write_text("x = 2\n", encoding="utf-8")
+    repo.index.add(["sample.py"])
+    c2 = repo.index.commit("feature commit")
+
+    # Detach HEAD (simulating actions/checkout on PR)
+    repo.head.reference = repo.commit(c2.hexsha)
+    repo.delete_head("phase-4-completion", force=True)
+
+    # Simulate origin/main tracking branch without local main branch
+    repo.create_remote("origin", "https://example.com/fake.git")
+    repo.create_head("origin/main", c1)
+    repo.delete_head("main", force=True)
+
+    parser = DiffParser()
+    parser.from_local_repo(str(tmp_path), base_ref="main", head_ref="phase-4-completion")
+
+    assert "sample.py" in parser.files
+    f = parser.files["sample.py"]
+    assert f.change_type == "modified"
+    assert len(f.hunks) == 1
+    assert any("x = 2" in ln.content for ln in f.hunks[0].added_lines)
+    assert any("x = 1" in ln.content for ln in f.hunks[0].removed_lines)
+
+
+def test_from_local_repo_normal_branches(tmp_path):
+    """Test from_local_repo with standard local branches."""
+    import git
+
+    repo = git.Repo.init(str(tmp_path))
+    file_path = tmp_path / "cli.py"
+    file_path.write_text("TIMEOUT = 30\n", encoding="utf-8")
+    repo.index.add(["cli.py"])
+    repo.index.commit("initial commit")
+    repo.create_head("main")
+
+    feat = repo.create_head("feat")
+    repo.head.reference = feat
+    file_path.write_text("TIMEOUT = 60\n", encoding="utf-8")
+    repo.index.add(["cli.py"])
+    repo.index.commit("feature commit")
+
+    parser = DiffParser()
+    parser.from_local_repo(str(tmp_path), base_ref="main", head_ref="feat")
+    assert "cli.py" in parser.files
+    assert parser.has_code_changes
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

@@ -30,9 +30,9 @@ from typing import Dict, List, Optional, Tuple
 
 from rank_bm25 import BM25Okapi
 
-from core.doc_parser import DocParser
-from core.diff_parser import DiffParser
-from core.models import CodeSymbolChange, DocSentence, DriftFinding, Severity
+from .doc_parser import DocParser
+from .diff_parser import DiffParser
+from .models import CodeSymbolChange, DocSentence, DriftFinding, Severity
 from .embeddings import EmbeddingService, EmbeddingMode, OFFLINE_EMBEDDING_DIM
 
 logger = logging.getLogger(__name__)
@@ -286,7 +286,7 @@ def run_hybrid_matcher(
     matcher.index_documents(all_sentences)
 
     # Extract code changes via AST extractor
-    from core.ast_extractor import ASTSymbolExtractor
+    from .ast_extractor import ASTSymbolExtractor
     extractor = ASTSymbolExtractor()
     changes = extractor.extract_from_diff(diff_parser.code_files)
 
