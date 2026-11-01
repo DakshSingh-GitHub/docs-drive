@@ -399,15 +399,15 @@ export default function Terminal({ embed }: { embed: boolean }) {
 
     const greeting = useMemo(
         () => [
-            ['', ''] as [string, LineClass?],
+            ['', 'tl-intro'] as [string, string?],
             [
                 'DOCSDRIVE TERMINAL v1.0 — documentation integrity engine',
-                'tl-bright',
-            ] as [string, LineClass?],
+                'tl-bright tl-intro',
+            ] as [string, string?],
             [
                 'Docs that code silently broke, found. Type help for commands.',
-                'tl-dim',
-            ] as [string, LineClass?],
+                'tl-dim tl-intro',
+            ] as [string, string?],
         ],
         []
     );
