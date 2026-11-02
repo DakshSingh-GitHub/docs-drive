@@ -1,6 +1,6 @@
-# Automated Documentation Drift Detection
+# Automated Documentation Drift Detection (DocsDrive)
 
-**Problem 05 – Hacktoberfest 2026 – Hack Day Sonipat**
+**Problem 05 – Hacktoberfest 2026 – Hack Day Sonipat**  
 **Team: HisenBugs**
 
 An automated CI check that identifies documentation made incorrect by code changes in a Pull Request. It analyzes the PR diff, links changed code (renamed flags, changed defaults, modified parameters, removed features) to the docs that describe them, and reports the exact documentation sentences that are now out of date — each with a reference to the responsible code change.
@@ -9,19 +9,20 @@ An automated CI check that identifies documentation made incorrect by code chang
 
 ## 📋 Table of Contents
 
-1. [Overview](#overview)
-2. [Architecture](#architecture)
-3. [Phase-by-Phase Implementation](#phase-by-phase-implementation)
-4. [Installation](#installation)
-5. [Usage](#usage)
-6. [API Reference](#api-reference)
-7. [CLI Reference](#cli-reference)
-8. [Testing](#testing)
-9. [Serverless Deployment (Vercel)](#serverless-deployment-vercel)
-10. [Demo Scenarios](#demo-scenarios)
-11. [Full-Stack Integration](#full-stack-integration)
-12. [Frontend Integration Guide](#frontend-integration-guide)
-13. [Team](#team)
+1. [Overview](#1-overview)
+2. [Architecture](#2-architecture)
+3. [Phase-by-Phase Implementation](#3-phase-by-phase-implementation)
+4. [Installation](#4-installation)
+5. [Usage](#5-usage)
+6. [Data Schemas](#6-data-schemas)
+7. [Testing](#7-testing)
+8. [Serverless Deployment (Vercel)](#8-serverless-deployment-vercel)
+9. [Demo Scenarios](#9-demo-scenarios)
+10. [Full-Stack Integration](#10-full-stack-integration)
+11. [Frontend Integration Guide](#11-frontend-integration-guide)
+12. [Technology Stack](#12-technology-stack)
+13. [Team](#13-team)
+14. [License](#14-license)
 
 ---
 
@@ -31,33 +32,33 @@ Documentation drifts when developers update code without synchronizing associate
 
 This project solves that problem by providing:
 
-- **Core Analysis Engine (Phase 1):** A Python CLI that parses code diffs, extracts semantic changes using AST parsing, links changed code symbols to documentation sentences using hybrid BM25 + dense embeddings, and verifies drift using an LLM (local Ollama gemma4:e4b with offline fallback).
+- **Core Analysis Engine (Phase 1):** A Python CLI that parses code diffs, extracts semantic changes using AST parsing, links changed code symbols to documentation sentences using hybrid BM25 + dense embeddings, and verifies drift using an LLM (local Ollama `gemma4:e4b` with offline fallback).
 
 - **GitHub Action / CI Check (Phase 2):** A Dockerized GitHub Action that runs on pull requests, analyzes PR diffs, posts inline review comments with suggestion blocks, creates GitHub Check Runs with file annotations, and validates drift detection against historical commit histories.
 
 - **FastAPI Web API (Phase 3):** A web service wrapping the core engine with async background jobs, SQLite persistence, and REST endpoints for the frontend dashboard.
 
-- **Next.js Frontend Dashboard (Phase 4):** A web interface with side-by-side diff visualization, one-click documentation fixes, PR analysis dashboard, and interactive findings board.
+- **Next.js Frontend Dashboard & 3D Workstation (Phase 4):** A web interface with side-by-side diff visualization, one-click documentation fixes, PR analysis dashboard, interactive findings board, and an interactive 3D retro CRT workstation (`DocsDrive`).
 
 ---
 
 ## 2. Architecture
 
-```
+```text
 ┌─────────────────────────────────────────────────────────────────────┐
-│                     Next.js Frontend (Port 3000)                   │
-│  app/lib/api.ts — Typed fetch client for backend API               │
+│                     Next.js Frontend (Port 3000)                    │
+│  app/lib/api.ts — Typed fetch client for backend API                │
 └─────────────────────────────────────────────────────────────────────┘
                             │ HTTPS / JSON
                             │ CORS enabled for localhost:3000
                             ▼
 ┌─────────────────────────────────────────────────────────────────────┐
-│                   FastAPI Backend (Port 8000)                      │
-│  api/main.py         — App entrypoint, CORS, health                │
-│  api/routes.py       — 10 REST endpoints                           │
-│  api/worker.py       — Async + sync job manager                    │
-│  api/database.py     — SQLite persistence                          │
-│  api/schemas.py      — Pydantic v2 request/response models         │
+│                   FastAPI Backend (Port 8000)                       │
+│  api/main.py         — App entrypoint, CORS, health                 │
+│  api/routes.py       — 10 REST endpoints                            │
+│  api/worker.py       — Async + sync job manager                     │
+│  api/database.py     — SQLite persistence                           │
+│  api/schemas.py      — Pydantic v2 request/response models          │
 └─────────────────────────────────────────────────────────────────────┘
                             │
                             ▼
@@ -75,7 +76,7 @@ This project solves that problem by providing:
 
 ### Core Pipeline
 
-```
+```text
 Input Diff
     │
     ▼
@@ -149,19 +150,20 @@ DriftAnalysisReport ──▶ JSON output with exact sentence, code line, sugges
 | 3.2 | API endpoints & worker | `backend/api/routes.py`, `backend/api/schemas.py`, `tests/test_api_routes.py` |
 
 **Endpoints:**
+
 | Endpoint | Method | Description |
 |----------|--------|-------------|
-| `GET /api/health` | Health check + Ollama connectivity |
-| `POST /api/analyze-pr` | Trigger PR drift analysis (returns run_id) |
-| `POST /api/analyze-diff` | Playground: raw diff + docs analysis |
-| `GET /api/runs` | List recent analysis runs |
-| `GET /api/runs/{run_id}` | Run status, progress, full report |
-| `POST /api/generate-fix` | AI-assisted doc fix generation |
-| `GET /api/runs/{run_id}/findings/{finding_id}` | Side-by-side diff + doc sentence |
-| `POST /api/fix/apply` | Downloadable git patch for fix |
-| `GET /api/playground/scenarios` | Curated demo scenarios |
-| `GET /api/repositories` | List tracked repositories |
-| `POST /api/repositories` | Add repository to track |
+| `/api/health` | `GET` | Health check + Ollama connectivity |
+| `/api/analyze-pr` | `POST` | Trigger PR drift analysis (returns `run_id`) |
+| `/api/analyze-diff` | `POST` | Playground: raw diff + docs analysis |
+| `/api/runs` | `GET` | List recent analysis runs |
+| `/api/runs/{run_id}` | `GET` | Run status, progress, full report |
+| `/api/generate-fix` | `POST` | AI-assisted doc fix generation |
+| `/api/runs/{run_id}/findings/{finding_id}` | `GET` | Side-by-side diff + doc sentence |
+| `/api/fix/apply` | `POST` | Downloadable git patch for fix |
+| `/api/playground/scenarios` | `GET` | Curated demo scenarios |
+| `/api/repositories` | `GET` | List tracked repositories |
+| `/api/repositories` | `POST` | Add repository to track |
 
 ---
 
@@ -170,7 +172,9 @@ DriftAnalysisReport ──▶ JSON output with exact sentence, code line, sugges
 **Next.js web application** with side-by-side diff visualization and interactive documentation fixes.
 
 **Routes:**
-- `/` — Landing page
+- `/` — Landing page (with interactive 3D workstation hero)
+- `/workstation` — Full-screen 3D workstation experience
+- `/terminal` — Standalone DocsDrive terminal (`/terminal?embed=1` for CRT embed)
 - `/prs` — PR analysis list & submission
 - `/prs/[owner]/[repo]/[pr_number]` — Interactive drift inspector
 - `/repositories` — Monitored repositories
@@ -196,7 +200,7 @@ DriftAnalysisReport ──▶ JSON output with exact sentence, code line, sugges
 ### Backend Setup
 
 ```bash
-cd /Users/dakshdts/Documents/Hackathons/docs-drive/backend
+cd backend
 
 # Create virtual environment
 python3 -m venv .venv
@@ -213,9 +217,7 @@ pip install fastapi uvicorn httpx aiosqlite
 ### Frontend Setup
 
 ```bash
-cd /Users/dakshdts/Documents/Hackathons/docs-drive
-
-# Install dependencies
+# From the repository root
 npm install
 
 # Start development server
@@ -230,6 +232,7 @@ npm run dev   # Opens http://localhost:3000
 
 ```bash
 cd backend
+export PYTHONPATH=".:.."
 
 # Analyze local git repository
 .venv/bin/python3 -m backend.cli check --repo . --base main --head HEAD
@@ -275,7 +278,7 @@ Analyze a PR:
 ```bash
 curl -X POST http://localhost:8000/api/analyze-pr \
   -H "Content-Type: application/json" \
-  -d '{"repo_url": "https://github.com/owner/repo", "pr_number": 42, "confidence_threshold": 0.75}'
+  -d '{"repo_url": "[https://github.com/owner/repo](https://github.com/owner/repo)", "pr_number": 42, "confidence_threshold": 0.75}'
 ```
 
 Analyze a diff:
@@ -302,7 +305,7 @@ curl http://localhost:8000/api/runs/run_abc123
 ## 6. Data Schemas
 
 ### CodeSymbolChange
-```python
+```jsonc
 {
   "file_path": "cli.py",
   "line_start": 5,
@@ -318,7 +321,7 @@ curl http://localhost:8000/api/runs/run_abc123
 ```
 
 ### DocSentence
-```python
+```jsonc
 {
   "doc_path": "docs/guide.md",
   "line_number": 42,
@@ -332,7 +335,7 @@ curl http://localhost:8000/api/runs/run_abc123
 ```
 
 ### DriftFinding
-```python
+```jsonc
 {
   "id": "offline-1",
   "doc_path": "docs/guide.md",
@@ -353,7 +356,7 @@ curl http://localhost:8000/api/runs/run_abc123
 ```
 
 ### DriftAnalysisReport
-```python
+```jsonc
 {
   "repo_name": "owner/repo",
   "pr_number": 42,
@@ -363,7 +366,7 @@ curl http://localhost:8000/api/runs/run_abc123
   "total_files_analyzed": 3,
   "total_symbols_changed": 5,
   "total_doc_sentences_scanned": 42,
-  "findings": [...],
+  "findings": [],
   "execution_time_seconds": 2.34
 }
 ```
@@ -534,26 +537,16 @@ See `MIGRATION.md` at the repository root for the complete frontend integration 
 
 ### 11.1 The 3D Workstation Experience
 
-The DocsDrive landing page (`/`) and `/workstation` render an interactive 3D
-retro workstation — a fully explorable room with a CRT computer that runs the
-**DocsDrive Terminal** inside its monitor, powered by the same FastAPI
-backend. The 3D environment is based on
-[henryjeff/portfolio-website](https://github.com/henryjeff/portfolio-website)
-(MIT, © 2024 Henry Heffernan — see `THIRD_PARTY_NOTICES.md`), rebranded and
-retargeted to DocsDrive: a custom DDBIOS boot sequence, DocsDrive computer
-markings, and a purpose-built terminal replacing the original inner app.
+The DocsDrive landing page (`/`) and `/workstation` render an interactive 3D retro workstation — a fully explorable room with a CRT computer that runs the **DocsDrive Terminal** inside its monitor, powered by the same FastAPI backend. The 3D environment is based on [henryjeff/portfolio-website](https://github.com/henryjeff/portfolio-website) (MIT, © 2024 Henry Heffernan — see `THIRD_PARTY_NOTICES.md`), rebranded and retargeted to DocsDrive: a custom DDBIOS boot sequence, DocsDrive computer markings, and a purpose-built terminal replacing the original inner app.
 
 | Route | What it is |
-|---|---|
+|-------|------------|
 | `/` | Landing page — the 3D workstation is the hero |
 | `/workstation` | Full-screen 3D workstation experience |
 | `/terminal` | Standalone DocsDrive terminal (same app, in the browser) |
 | `/terminal?embed=1` | Chrome-free terminal rendered inside the CRT |
 
-Terminal commands: `help`, `about`, `health`, `analyze-pr <repo_url> <pr>`,
-`runs`, `finding`, `fix`, `scenarios`, `demo <scenario_id>`, `clear` —
-all backed by the real API (`NEXT_PUBLIC_API_URL`, default
-`http://localhost:8000`); nothing is simulated.
+Terminal commands: `help`, `about`, `health`, `analyze-pr <repo_url> <pr>`, `runs`, `finding`, `fix`, `scenarios`, `demo <scenario_id>`, `clear` — all backed by the real API (`NEXT_PUBLIC_API_URL`, default `http://localhost:8000`); nothing is simulated.
 
 Rebuilding the isolated 3D app (outputs to `public/docsdrive-world/`):
 
@@ -561,9 +554,7 @@ Rebuilding the isolated 3D app (outputs to `public/docsdrive-world/`):
 npm run docsdrive:world:build
 ```
 
-Integration details: `docs/HENRY_3D_SCENE_AUDIT.md`,
-`docs/DOCSDRIVE_FRONTEND_ARCHITECTURE.md`. Verification screenshots:
-`docs/screenshots/`.
+Integration details: `docs/HENRY_3D_SCENE_AUDIT.md`, `docs/DOCSDRIVE_FRONTEND_ARCHITECTURE.md`. Verification screenshots: `docs/screenshots/`.
 
 ---
 
@@ -597,10 +588,10 @@ Integration details: `docs/HENRY_3D_SCENE_AUDIT.md`,
 
 | Member | GitHub |
 |--------|--------|
-| Jaydev Lamror | @jaydevLamror11 |
-| Rushan Advani | @rushanadv |
-| Daksh Singh | @DakshSingh-GitHub |
-| Sahaj Choukhani | @sahajchoukhani |
+| Jaydev Lamror | [@jaydevLamror11](https://github.com/jaydevLamror11) |
+| Rushan Advani | [@rushanadv](https://github.com/rushanadv) |
+| Daksh Singh | [@DakshSingh-GitHub](https://github.com/DakshSingh-GitHub) |
+| Sahaj Choukhani | [@sahajchoukhani](https://github.com/sahajchoukhani) |
 
 ---
 
